@@ -6,6 +6,7 @@ Whisper model settings, VAD configuration, and transcription options.
 """
 
 import os
+import json
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
@@ -177,8 +178,6 @@ class Config:
     def _load_from_file(self, config_file: str) -> None:
         """Load configuration from JSON or YAML file."""
         try:
-            import json
-
             with open(config_file, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
             self._update_from_dict(config_data)
@@ -209,8 +208,6 @@ class Config:
 
     def save_to_file(self, config_file: str) -> None:
         """Save current configuration to JSON file."""
-        import json
-
         with open(config_file, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
 

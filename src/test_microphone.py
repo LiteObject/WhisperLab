@@ -55,7 +55,7 @@ class MicrophoneAnalyzer:
             print(f"Default output device: {default_output}")
             print()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             print(f"Error listing audio devices: {e}")
             self.logger.error("Failed to list audio devices: %s", e)
 
@@ -85,7 +85,7 @@ class MicrophoneAnalyzer:
 
             return noise_rms, noise_max, noise_data
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error measuring noise floor: %s", e)
             return 0.0, 0.0, np.array([])
 
@@ -372,7 +372,7 @@ class MicrophoneAnalyzer:
 
             return results
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             print(f"❌ Error during microphone test: {e}")
             self.logger.error("Microphone test failed: %s", e)
             results["error"] = str(e)
@@ -409,7 +409,7 @@ class MicrophoneAnalyzer:
                 print("❌ No audio detected")
                 return False
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             print(f"❌ Test failed: {e}")
             return False
 
@@ -451,7 +451,7 @@ def main():
 
     except KeyboardInterrupt:
         print("\n\nTest interrupted by user.")
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, ImportError) as e:
         print(f"\nUnexpected error: {e}")
 
 
