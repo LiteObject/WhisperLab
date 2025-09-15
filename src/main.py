@@ -7,6 +7,7 @@ import signal
 import sys
 import threading
 import time
+import argparse
 from collections import deque
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from transcription import Transcription
 from console_animation import get_animator, start_animation, stop_animation
 from voice_activity_detection import create_vad_manager
 from config import get_config
+from test_microphone import test_microphone
 
 
 def setup_logging() -> logging.Logger:
@@ -76,10 +78,13 @@ def setup_logging() -> logging.Logger:
 class WhisperLab:
     """Main application class for real-time audio transcription using Whisper."""
 
-    def __init__(self):
+    def __init__(self, config=None):
         # Set up logging first
         self.logger = setup_logging()
         self.logger.info("Initializing WhisperLab application")
+
+        # Store configuration
+        self.config = config if config is not None else get_config()
 
         self.audio_capture = AudioCapture()
         self.transcription = Transcription()
@@ -307,7 +312,87 @@ class WhisperLab:
 def main():
     """Main entry point."""
     try:
-        app = WhisperLab()
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(
+            description="WhisperLab Real-time Audio Transcription"
+        )
+        parser.add_argument(
+            "--config", type=str, help="Path to configuration file (JSON format)"
+        )
+        parser.add_argument(
+            "--model",
+            type=str,
+            choices=[
+                "tiny",
+                "base",
+                "small",
+                "medium",
+                "large",
+                "tiny.en",
+                "base.en",
+                "small.en",
+                "medium.en",
+            ],
+            help="Whisper model to use (overrides config file)",
+        )
+        args = parser.parse_args()
+
+        # Load configuration from file if specified
+        if args.config:
+            from config import load_config
+
+            config = load_config(args.config)
+            print(f"📄 Loaded configuration from: {args.config}")
+        else:
+            config = get_config()
+
+        # Override model if specified via command line
+        if args.model:
+            config.whisper.model_name = args.model
+            print(f"🎯 Using Whisper model: {args.model}")
+        else:
+            print(f"🎯 Using Whisper model: {config.whisper.model_name}")
+
+        # Quick microphone check before starting main app (if enabled)
+        if config.startup.microphone_check_enabled:
+            print("🔍 Checking microphone availability...")
+            try:
+                if test_microphone():
+                    print("✅ Microphone check passed!")
+                else:
+                    print("❌ Microphone test failed!")
+                    print("⚠️  The microphone may not be working properly.")
+
+                    if config.startup.exit_on_microphone_fail:
+                        print(
+                            "Exiting WhisperLab (configured to exit on microphone failure)."
+                        )
+                        return
+
+                    response = input("Continue anyway? (y/N): ").strip().lower()
+                    if response not in ["y", "yes"]:
+                        print("Exiting WhisperLab.")
+                        return
+                    print("Continuing with potentially non-functional microphone...")
+            except (ImportError, OSError, RuntimeError) as e:
+                print(f"⚠️  Could not test microphone: {e}")
+
+                if config.startup.exit_on_microphone_fail:
+                    print(
+                        "Exiting WhisperLab (configured to exit on microphone test failure)."
+                    )
+                    return
+
+                response = (
+                    input("Continue without microphone test? (y/N): ").strip().lower()
+                )
+                if response not in ["y", "yes"]:
+                    print("Exiting WhisperLab.")
+                    return
+
+            print()  # Add spacing before main app starts
+
+        app = WhisperLab(config)
         app.start()
     except (ImportError, OSError, RuntimeError) as e:
         # Try to log the error, but fallback to print if logging isn't set up

@@ -93,6 +93,43 @@ Transcription thread started...
 - **Ensure good microphone placement** and volume
 - **Minimize background noise** for better accuracy
 
+## Startup Microphone Check
+
+WhisperLab automatically performs a quick microphone test when starting up:
+
+```bash
+python run.py
+```
+
+Output:
+```
+🔍 Checking microphone availability...
+🚀 Quick Microphone Test (3 seconds)
+✅ Microphone working!
+✅ Microphone check passed!
+
+Starting WhisperLab...
+```
+
+### Configuring Microphone Check
+
+You can control the startup microphone check behavior:
+
+**Environment Variables:**
+- `WHISPERLAB_MIC_CHECK_ENABLED=false` - Disable startup microphone check
+- `WHISPERLAB_MIC_CHECK_EXIT_ON_FAIL=true` - Exit automatically if microphone fails
+
+**Example:**
+```bash
+# Skip microphone check
+set WHISPERLAB_MIC_CHECK_ENABLED=false
+python run.py
+
+# Exit automatically if microphone doesn't work
+set WHISPERLAB_MIC_CHECK_EXIT_ON_FAIL=true
+python run.py
+```
+
 ## Dependencies
 
 This project requires the following Python packages:

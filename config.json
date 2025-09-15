@@ -1,0 +1,69 @@
+{
+  "whisper": {
+    "model_name": "base",
+    "device": "auto",
+    "language": null,
+    "task": "transcribe",
+    "temperature": 0.0,
+    "best_of": 5,
+    "beam_size": 5,
+    "patience": 1.0,
+    "length_penalty": 1.0,
+    "suppress_tokens": "-1",
+    "initial_prompt": null,
+    "condition_on_previous_text": true,
+    "fp16": true,
+    "compression_ratio_threshold": 2.4,
+    "logprob_threshold": -1.0,
+    "no_speech_threshold": 0.6
+  },
+  "audio": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "chunk_size": 512,
+    "buffer_duration": 3.0,
+    "device": null,
+    "dtype": "float32"
+  },
+  "vad": {
+    "enabled": true,
+    "vad_type": "silero",
+    "confidence_threshold": 0.5,
+    "min_speech_duration": 0.25,
+    "min_silence_duration": 0.5,
+    "speech_pad_before": 0.1,
+    "speech_pad_after": 0.1,
+    "fallback_threshold": 0.01
+  },
+  "startup": {
+    "microphone_check_enabled": true,
+    "microphone_check_duration": 3.0,
+    "exit_on_microphone_fail": false,
+    "show_startup_info": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file_enabled": true,
+    "file_path": "whisperlab.log",
+    "console_enabled": true,
+    "max_file_size": 10485760,
+    "backup_count": 5
+  },
+  "animation": {
+    "enabled": true,
+    "update_interval": 0.1,
+    "meter_width": 50,
+    "show_waveform": true,
+    "show_confidence": true,
+    "show_transcription_status": true,
+    "colors_enabled": true
+  },
+  "performance": {
+    "model_cache_enabled": true,
+    "audio_buffer_size": 1000,
+    "thread_pool_size": 2,
+    "memory_cleanup_interval": 60.0,
+    "gc_threshold": 700
+  }
+}

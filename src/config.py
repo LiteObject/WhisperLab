@@ -98,6 +98,16 @@ class AnimationConfig:
 
 
 @dataclass
+class StartupConfig:
+    """Startup behavior configuration."""
+
+    microphone_check_enabled: bool = True
+    microphone_check_duration: float = 3.0  # seconds for quick test
+    exit_on_microphone_fail: bool = False  # If True, exit without prompting
+    show_startup_info: bool = True
+
+
+@dataclass
 class PerformanceConfig:
     """Performance optimization configuration."""
 
@@ -119,6 +129,7 @@ class Config:
         self.transcription = TranscriptionConfig()
         self.logging = LoggingConfig()
         self.animation = AnimationConfig()
+        self.startup = StartupConfig()
         self.performance = PerformanceConfig()
 
         # Load from environment variables if available
@@ -175,6 +186,17 @@ class Config:
         if animation_enabled_env:
             self.animation.enabled = animation_enabled_env.lower() == "true"
 
+        # Startup configuration
+        mic_check_enabled_env = os.getenv("WHISPERLAB_MIC_CHECK_ENABLED")
+        if mic_check_enabled_env:
+            self.startup.microphone_check_enabled = (
+                mic_check_enabled_env.lower() == "true"
+            )
+
+        mic_check_exit_env = os.getenv("WHISPERLAB_MIC_CHECK_EXIT_ON_FAIL")
+        if mic_check_exit_env:
+            self.startup.exit_on_microphone_fail = mic_check_exit_env.lower() == "true"
+
     def _load_from_file(self, config_file: str) -> None:
         """Load configuration from JSON or YAML file."""
         try:
@@ -203,6 +225,7 @@ class Config:
             "transcription": self.transcription.__dict__,
             "logging": self.logging.__dict__,
             "animation": self.animation.__dict__,
+            "startup": self.startup.__dict__,
             "performance": self.performance.__dict__,
         }
 

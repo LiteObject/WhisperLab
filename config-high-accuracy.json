@@ -1,0 +1,17 @@
+{
+  "whisper": {
+    "model_name": "small",
+    "device": "auto",
+    "language": null,
+    "task": "transcribe"
+  },
+  "startup": {
+    "microphone_check_enabled": true,
+    "exit_on_microphone_fail": false
+  },
+  "logging": {
+    "level": "INFO",
+    "file_enabled": true,
+    "console_enabled": true
+  }
+}
