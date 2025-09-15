@@ -1,6 +1,6 @@
 # Core dependencies for WhisperLab real-time transcription
 openai-whisper==20231117
-torch==2.1.1
+torch==2.8.0
 torchaudio==2.1.1
 
 # Audio processing and capture
