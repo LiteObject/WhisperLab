@@ -171,7 +171,11 @@ class ConsoleAnimator:
 
         # Colored indicators
         if self.is_speech_detected:
-            return f"{Fore.GREEN}{Style.BRIGHT}🗣️  SPEECH DETECTED{Style.RESET_ALL} {confidence_bar} {Fore.CYAN}({self.vad_method}){Style.RESET_ALL}"
+            speech_text = (
+                f"{Fore.GREEN}{Style.BRIGHT}🗣️  SPEECH DETECTED{Style.RESET_ALL}"
+            )
+            method_text = f"{Fore.CYAN}({self.vad_method}){Style.RESET_ALL}"
+            return f"{speech_text} {confidence_bar} {method_text}"
         elif self.audio_level > 0.005:
             return f"{Fore.YELLOW}🎤 Audio Activity{Style.RESET_ALL} {confidence_bar}"
         else:
@@ -182,8 +186,8 @@ class ConsoleAnimator:
         filled = int(confidence * width)
 
         if not COLORAMA_AVAILABLE:
-            bar = "█" * filled + "░" * (width - filled)
-            return f"[{bar}] {confidence:.2f}"
+            meter = "█" * filled + "░" * (width - filled)
+            return f"[{meter}] {confidence:.2f}"
 
         # Color based on confidence
         if confidence > 0.8:
@@ -195,10 +199,10 @@ class ConsoleAnimator:
         else:
             color = Fore.RED
 
-        bar = (
+        meter = (
             color + "█" * filled + Style.RESET_ALL + Fore.WHITE + "░" * (width - filled)
         )
-        return f"[{bar}{Style.RESET_ALL}] {confidence:.2f}"
+        return f"[{meter}{Style.RESET_ALL}] {confidence:.2f}"
 
     def _get_transcription_indicator(self):
         """Get transcription status indicator."""
@@ -212,10 +216,12 @@ class ConsoleAnimator:
 
         if self.last_transcription:
             if not COLORAMA_AVAILABLE:
-                return (
-                    f"✅ #{self.transcription_count}: {self.last_transcription[:60]}..."
-                )
-            return f"{Fore.GREEN}✅ #{self.transcription_count}: {Style.RESET_ALL}{self.last_transcription[:60]}..."
+                transcription_text = f"✅ #{self.transcription_count}: "
+                return transcription_text + f"{self.last_transcription[:60]}..."
+            success_text = (
+                f"{Fore.GREEN}✅ #{self.transcription_count}: {Style.RESET_ALL}"
+            )
+            return success_text + f"{self.last_transcription[:60]}..."
 
         return ""
 
@@ -287,16 +293,16 @@ class ConsoleAnimator:
 
 
 # Module-level animator instance
-_animator = None
+_ANIMATOR = None
 
 
 def get_animator():
     """Get the module animator instance."""
     # pylint: disable=global-statement
-    global _animator
-    if _animator is None:
-        _animator = ConsoleAnimator()
-    return _animator
+    global _ANIMATOR
+    if _ANIMATOR is None:
+        _ANIMATOR = ConsoleAnimator()
+    return _ANIMATOR
 
 
 def start_animation():
@@ -306,5 +312,5 @@ def start_animation():
 
 def stop_animation():
     """Stop the global animation."""
-    if _animator:
-        _animator.stop()
+    if _ANIMATOR:
+        _ANIMATOR.stop()
