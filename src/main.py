@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # pylint: disable=wrong-import-position,import-error
 from audio_capture import AudioCapture
 from transcription import Transcription
+from console_animation import get_animator, start_animation, stop_animation
 
 
 class WhisperLab:
@@ -23,6 +24,7 @@ class WhisperLab:
         self.audio_capture = AudioCapture()
         self.transcription = Transcription()
         self.running = False
+        self.animator = get_animator()
 
     def transcribe_audio(self):
         """Continuously get audio data and transcribe it."""
@@ -48,6 +50,14 @@ class WhisperLab:
                     if len(audio_buffer) > max_buffer_samples:
                         audio_buffer = audio_buffer[-max_buffer_samples:]
 
+                    # Calculate current audio level for animation
+                    current_level = (
+                        float(np.max(np.abs(audio_data)))
+                        if len(audio_data) > 0
+                        else 0.0
+                    )
+                    self.animator.update_audio_level(current_level)
+
                     # Check if it's time to transcribe
                     current_time = time.time()
                     time_condition = (
@@ -62,31 +72,45 @@ class WhisperLab:
                         audio_array = np.array(audio_buffer, dtype=np.float32)
                         audio_level = float(np.max(np.abs(audio_array)))
 
+                        # Update VAD status
+                        speech_detected = audio_level > 0.01
+                        self.animator.set_speech_detected(speech_detected)
+
                         # Only transcribe if there's sufficient audio activity
-                        if audio_level > 0.01:
+                        if speech_detected:
                             transcription_count += 1
+                            self.animator.set_transcribing(True)
+
                             buffer_seconds = len(audio_buffer) / sample_rate
-                            print(
+                            self.animator.display_static_message(
                                 f"🎤 Transcribing {buffer_seconds:.1f}s of audio "
-                                f"(level: {audio_level:.4f})..."
+                                f"(level: {audio_level:.4f})...",
+                                "info",
                             )
 
                             text = self.transcription.transcribe_audio_direct(
                                 audio_array
                             )
 
+                            self.animator.set_transcribing(False)
+
                             if text and text.strip():
-                                print(f"✅ Transcribed #{transcription_count}: {text}")
+                                self.animator.set_transcription_result(
+                                    text.strip(), transcription_count
+                                )
+                                self.animator.display_static_message(
+                                    f"✅ Transcribed #{transcription_count}: {text}",
+                                    "success",
+                                )
                             else:
-                                print(
+                                self.animator.display_static_message(
                                     f"❌ Transcription #{transcription_count} "
-                                    f"returned empty result"
+                                    f"returned empty result",
+                                    "warning",
                                 )
                         else:
-                            print(
-                                f"🔇 Skipping transcription - audio level too low "
-                                f"({audio_level:.4f})"
-                            )
+                            self.animator.set_speech_detected(False)
+                            # Don't display the "skipping" message as animation shows VAD status
 
                         last_transcription_time = current_time
                         # Keep some overlap for continuity
@@ -98,6 +122,8 @@ class WhisperLab:
                         )
 
                 else:
+                    # Update animation with zero level when no audio
+                    self.animator.update_audio_level(0.0)
                     # Small sleep to avoid busy waiting
                     time.sleep(0.01)
 
@@ -110,6 +136,7 @@ class WhisperLab:
     def signal_handler(self, _sig, _frame):
         """Handle Ctrl+C gracefully."""
         print("\nStopping WhisperLab...")
+        stop_animation()
         self.stop()
         sys.exit(0)
 
@@ -126,6 +153,9 @@ class WhisperLab:
         # Start audio capture
         self.audio_capture.start_recording()
 
+        # Start console animation
+        start_animation()
+
         # Start transcription in a separate thread
         transcribe_thread = threading.Thread(target=self.transcribe_audio, daemon=True)
         transcribe_thread.start()
@@ -140,6 +170,7 @@ class WhisperLab:
     def stop(self):
         """Stop audio capture and transcription."""
         self.running = False
+        stop_animation()
         self.audio_capture.stop_recording()
         print("WhisperLab stopped.")
 
