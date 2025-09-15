@@ -44,12 +44,10 @@ class VADBase(ABC):
         Returns:
             Tuple of (is_speech: bool, confidence: float)
         """
-        pass
 
     @abstractmethod
     def get_name(self) -> str:
         """Get the name of the VAD implementation."""
-        pass
 
 
 class ThresholdVAD(VADBase):
