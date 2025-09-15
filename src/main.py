@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from audio_capture import AudioCapture
 from transcription import Transcription
 from console_animation import get_animator, start_animation, stop_animation
+from voice_activity_detection import create_vad_manager
 
 
 class WhisperLab:
@@ -25,6 +26,10 @@ class WhisperLab:
         self.transcription = Transcription()
         self.running = False
         self.animator = get_animator()
+
+        # Initialize sophisticated VAD manager
+        self.vad_manager = create_vad_manager(vad_type="auto")
+        print(f"🎯 VAD initialized: {self.vad_manager.get_status()['primary_vad']}")
 
     def transcribe_audio(self):
         """Continuously get audio data and transcribe it."""
@@ -70,13 +75,20 @@ class WhisperLab:
                     ):  # At least 1 second of audio
                         # Convert buffer to numpy array
                         audio_array = np.array(audio_buffer, dtype=np.float32)
-                        audio_level = float(np.max(np.abs(audio_array)))
 
-                        # Update VAD status
-                        speech_detected = audio_level > 0.01
+                        # Use sophisticated VAD instead of simple threshold
+                        speech_detected, vad_confidence, vad_method = (
+                            self.vad_manager.is_speech(audio_array, sample_rate)
+                        )
+
+                        # Update animation with VAD results
                         self.animator.set_speech_detected(speech_detected)
+                        self.animator.set_vad_confidence(
+                            vad_confidence
+                        )  # Will add this method
+                        self.animator.set_vad_method(vad_method)  # Will add this method
 
-                        # Only transcribe if there's sufficient audio activity
+                        # Only transcribe if speech is detected
                         if speech_detected:
                             transcription_count += 1
                             self.animator.set_transcribing(True)
@@ -84,7 +96,7 @@ class WhisperLab:
                             buffer_seconds = len(audio_buffer) / sample_rate
                             self.animator.display_static_message(
                                 f"🎤 Transcribing {buffer_seconds:.1f}s of audio "
-                                f"(level: {audio_level:.4f})...",
+                                f"(VAD confidence: {vad_confidence:.3f}, method: {vad_method})...",
                                 "info",
                             )
 

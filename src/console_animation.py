@@ -39,6 +39,10 @@ class ConsoleAnimator:
         self.last_transcription = ""
         self.transcription_count = 0
 
+        # Enhanced VAD state
+        self.vad_confidence = 0.0
+        self.vad_method = "Unknown"
+
         # Visual elements
         self.audio_history = deque(maxlen=50)  # Keep last 50 audio levels for waveform
         self.animation_frame = 0
@@ -79,6 +83,16 @@ class ConsoleAnimator:
         with self.lock:
             self.last_transcription = text
             self.transcription_count = count
+
+    def set_vad_confidence(self, confidence):
+        """Update VAD confidence level."""
+        with self.lock:
+            self.vad_confidence = confidence
+
+    def set_vad_method(self, method):
+        """Update VAD method name."""
+        with self.lock:
+            self.vad_method = method
 
     def _get_audio_meter(self, level, width=20):
         """Generate a visual audio level meter."""
@@ -144,21 +158,47 @@ class ConsoleAnimator:
 
     def _get_vad_indicator(self):
         """Get Voice Activity Detection visual indicator."""
+        # Create confidence bar
+        confidence_bar = self._get_confidence_bar(self.vad_confidence)
+
         if not COLORAMA_AVAILABLE:
             if self.is_speech_detected:
-                return "🗣️  SPEECH DETECTED"
+                return f"🗣️  SPEECH DETECTED {confidence_bar} ({self.vad_method})"
             elif self.audio_level > 0.005:
-                return "🎤 Audio Activity"
+                return f"🎤 Audio Activity {confidence_bar}"
             else:
-                return "🔇 Silence"
+                return f"🔇 Silence {confidence_bar}"
 
         # Colored indicators
         if self.is_speech_detected:
-            return f"{Fore.GREEN}{Style.BRIGHT}🗣️  SPEECH DETECTED{Style.RESET_ALL}"
+            return f"{Fore.GREEN}{Style.BRIGHT}🗣️  SPEECH DETECTED{Style.RESET_ALL} {confidence_bar} {Fore.CYAN}({self.vad_method}){Style.RESET_ALL}"
         elif self.audio_level > 0.005:
-            return f"{Fore.YELLOW}🎤 Audio Activity{Style.RESET_ALL}"
+            return f"{Fore.YELLOW}🎤 Audio Activity{Style.RESET_ALL} {confidence_bar}"
         else:
-            return f"{Fore.CYAN}🔇 Silence{Style.RESET_ALL}"
+            return f"{Fore.CYAN}🔇 Silence{Style.RESET_ALL} {confidence_bar}"
+
+    def _get_confidence_bar(self, confidence, width=10):
+        """Generate a confidence level bar."""
+        filled = int(confidence * width)
+
+        if not COLORAMA_AVAILABLE:
+            bar = "█" * filled + "░" * (width - filled)
+            return f"[{bar}] {confidence:.2f}"
+
+        # Color based on confidence
+        if confidence > 0.8:
+            color = Fore.GREEN + Style.BRIGHT
+        elif confidence > 0.6:
+            color = Fore.GREEN
+        elif confidence > 0.4:
+            color = Fore.YELLOW
+        else:
+            color = Fore.RED
+
+        bar = (
+            color + "█" * filled + Style.RESET_ALL + Fore.WHITE + "░" * (width - filled)
+        )
+        return f"[{bar}{Style.RESET_ALL}] {confidence:.2f}"
 
     def _get_transcription_indicator(self):
         """Get transcription status indicator."""

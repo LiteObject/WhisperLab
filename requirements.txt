@@ -3,5 +3,6 @@ sounddevice
 soundfile
 numpy
 torch
+torchaudio
 librosa
 colorama
