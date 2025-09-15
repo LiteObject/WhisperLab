@@ -1,8 +1,20 @@
-openai-whisper
-sounddevice
-soundfile
-numpy
-torch
-torchaudio
-librosa
-colorama
+# Core dependencies for WhisperLab real-time transcription
+openai-whisper==20231117
+torch==2.1.1
+torchaudio==2.1.1
+
+# Audio processing and capture
+sounddevice==0.4.6
+soundfile==0.12.1
+librosa==0.10.1
+numpy==1.24.3
+
+# Scientific computing for frequency analysis
+scipy==1.11.4
+
+# Console output formatting
+colorama==0.4.6
+
+# Additional dependencies for enhanced functionality
+# Note: silero-vad is typically installed with openai-whisper
+# but may need explicit installation in some environments
